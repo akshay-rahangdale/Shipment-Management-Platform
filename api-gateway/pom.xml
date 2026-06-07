@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.shipment</groupId>
+        <artifactId>shipment-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>api-gateway</artifactId>
+    <name>API Gateway</name>
+
+    <!--
+        IMPORTANT: The API Gateway uses spring-cloud-starter-gateway,
+        which is built on Spring WebFlux (reactive/non-blocking).
+        This means it CANNOT use spring-boot-starter-web (which is
+        blocking/servlet-based). These two conflict — if you add both,
+        Spring Boot will fail to start with a confusing error.
+
+        The gateway's job is purely routing + rate limiting + auth.
+        It has no database of its own.
+    -->
+
+    <dependencies>
+
+        <!--
+            spring-cloud-starter-gateway: the reactive API gateway.
+            Routes are configured in application.yml — no code needed
+            for basic routing. Includes filters for rate limiting,
+            circuit breaking, path rewriting, header manipulation.
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+            <!-- Version comes from the Spring Cloud BOM we imported in the parent -->
+        </dependency>
+
+        <!--
+            spring-cloud-starter-circuitbreaker-reactor-resilience4j:
+            If shipment-service is down, the gateway doesn't just hang —
+            it fails fast and returns a fallback response.
+            Resilience4j is the circuit breaker library.
+            "reactor" = WebFlux-compatible version.
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+        </dependency>
+
+        <!--
+            Redis: used by the gateway's built-in rate limiter filter.
+            Spring Cloud Gateway's RedisRateLimiter stores request counts
+            in Redis using a token bucket algorithm — atomic and distributed
+            across multiple gateway instances.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+            <!-- Note: *-reactive because gateway is WebFlux-based -->
+        </dependency>
+
+        <!--
+            spring-boot-starter-security + oauth2-resource-server:
+            The gateway validates JWT tokens before forwarding requests.
+            oauth2-resource-server auto-configures JWT validation —
+            you just point it at your JWKS URI in application.yml.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

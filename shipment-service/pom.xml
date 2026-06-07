@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        WHAT IS THIS FILE?
+        This is the shipment-service's personal shopping list.
+        The parent already gave us Lombok and Spring Test for free.
+        Here we say: "I ALSO need PostgreSQL, Kafka, and Redis."
+
+        The tracking-service will have a DIFFERENT child pom.xml
+        that says "I need MongoDB and Kafka" — no PostgreSQL.
+        This is the power of multi-module: each service only carries
+        what it actually needs.
+    -->
+
+    <!-- Point to our parent so we inherit its rules and versions -->
+    <parent>
+        <groupId>com.shipment</groupId>
+        <artifactId>shipment-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <!-- relativePath: tells Maven where to find the parent pom.xml.
+             "../pom.xml" means "go one folder up, find pom.xml there" -->
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <!-- This service's own identity -->
+    <artifactId>shipment-service</artifactId>
+    <name>Shipment Service</name>
+
+    <dependencies>
+
+        <!-- ==================== WEB / API ==================== -->
+
+        <!--
+            spring-boot-starter-web: everything needed to handle HTTP.
+            Includes: Tomcat (the web server), Jackson (JSON parsing),
+            Spring MVC (routing requests to your @Controller methods).
+            Without this, your service can't receive HTTP requests.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!--
+            spring-boot-starter-validation: lets you annotate fields
+            with @NotNull, @Size(max=50), @Email etc. and Spring
+            automatically validates incoming request bodies.
+            Without this, you'd write `if (name == null) throw...`
+            manually everywhere.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ==================== DATABASE (PostgreSQL) ==================== -->
+
+        <!--
+            spring-boot-starter-data-jpa: JPA = Java Persistence API.
+            This lets you define a Java class (ShipmentEntity) and Spring
+            automatically creates the SQL table, handles INSERT/SELECT/UPDATE.
+            You write Java objects, Spring writes the SQL.
+            Includes Hibernate (the JPA implementation) under the hood.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!--
+            postgresql: the JDBC driver — the "translator" that lets
+            Java talk to a PostgreSQL database. Spring Boot finds this
+            on the classpath and automatically sets up the connection.
+            Without it, JPA has no way to actually speak PostgreSQL.
+        -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <!-- No version tag here! The parent's Spring Boot parent
+                 already manages postgresql's version. This is the
+                 version inheritance in action. -->
+        </dependency>
+
+        <!--
+            flyway-core: database migration tool.
+            Problem: your DB schema changes over time. How do you apply
+            those changes consistently across dev/staging/production?
+            Flyway maintains a migrations/ folder of SQL files
+            (V1__create_shipments_table.sql, V2__add_carrier_index.sql).
+            On startup, it runs any migrations the DB hasn't seen yet.
+            Without Flyway, your team manually applies SQL scripts
+            and things go out of sync.
+        -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <!-- Flyway needs this extra module for PostgreSQL specifically -->
+<!--        <dependency>-->
+<!--            <groupId>org.flywaydb</groupId>-->
+<!--            <artifactId>flyway-database-postgresql</artifactId>-->
+<!--        </dependency>-->
+
+        <!-- ==================== KAFKA ==================== -->
+
+        <!--
+            spring-kafka: the Spring wrapper around the Kafka client.
+            Lets you publish messages with KafkaTemplate.send() and
+            consume them with @KafkaListener on a method.
+            Without this, Kafka would need 100+ lines of manual setup.
+        -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+        <!-- ==================== CACHE (Redis) ==================== -->
+
+        <!--
+            spring-boot-starter-data-redis: Redis client integration.
+            Lets you annotate methods with @Cacheable("shipments")
+            and Spring automatically caches the result in Redis.
+            Also used for rate limiting and idempotency keys.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- ==================== OBSERVABILITY ==================== -->
+
+        <!--
+            spring-boot-starter-actuator: adds /actuator/health,
+            /actuator/metrics, /actuator/info endpoints.
+            Kubernetes uses /actuator/health for liveness probes:
+            "is this pod alive?" If it returns 200, keep it running.
+            If it returns 503, Kubernetes restarts it automatically.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!--
+            micrometer-registry-prometheus: exports metrics in a format
+            Prometheus (the monitoring tool) can scrape.
+            AWS EKS + Prometheus reads /actuator/prometheus every 15s
+            to track request rates, error rates, JVM memory, etc.
+        -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- ==================== UTILITIES ==================== -->
+
+        <!--
+            mapstruct: generates code that maps ShipmentEntity → ShipmentDTO.
+            You define an interface with one method signature,
+            MapStruct generates the implementation at compile time.
+            Without it, you'd write 20 lines of entity.setX(dto.getX()) manually.
+        -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
+        </dependency>
+
+        <!-- ==================== TESTING ==================== -->
+
+        <!--
+            spring-kafka-test: provides an EmbeddedKafkaBroker —
+            a real Kafka broker that starts inside your test JVM.
+            No Docker needed for unit tests. Tests can produce and
+            consume real Kafka messages in milliseconds.
+        -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
+            testcontainers postgresql: spins up a REAL PostgreSQL
+            Docker container when your integration tests run.
+            Way better than H2 in-memory DB — tests actually catch
+            PostgreSQL-specific behaviour (constraints, indexes, etc.)
+        -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Wire in the Spring Boot fat-jar plugin for THIS service -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        WHAT IS THIS FILE?
+        Think of this as the "house rules" document for the whole project.
+        Every child service (shipment-service, tracking-service, etc.)
+        automatically inherits everything defined here.
+
+        WHY A PARENT POM?
+        Without it, all 5 services would each separately declare
+        "I need Spring Boot 3.2.0" — and you'd have to update 5 files
+        every time you wanted to upgrade a version. The parent fixes
+        versions in ONE place, and children just say "give me what
+        the parent has."
+    -->
+
+    <!-- This is US — the parent project -->
+    <groupId>com.shipment</groupId>
+    <artifactId>shipment-platform</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <!--
+        packaging = pom means: "this module produces no jar itself,
+        it only acts as a parent/coordinator for child modules."
+        If you forget this and leave it as 'jar', Maven will try to
+        compile this pom as a Java project and fail.
+    -->
+    <packaging>pom</packaging>
+    <name>Shipment Platform - Parent</name>
+
+    <!--
+        MODULES: tells Maven "these folders are my children".
+        When you run `mvn install` from this root folder, Maven
+        builds ALL of these in the order they're listed.
+    -->
+    <modules>
+        <module>api-gateway</module>
+        <module>shipment-service</module>
+        <module>tracking-service</module>
+        <module>notification-service</module>
+        <module>sla-monitor</module>
+    </modules>
+
+    <!--
+        PARENT: we inherit from Spring Boot's own parent POM.
+        Spring Boot's parent already sets up hundreds of sensible
+        defaults (Java version, encoding, plugin versions).
+        Think of it as: Spring Boot is our landlord,
+        and we're subletting rooms to our 5 services.
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <!--
+        PROPERTIES: version numbers pinned in one place.
+        If Kafka releases a new version, you change it HERE,
+        and all 5 services automatically get the update.
+        No property = hunting across 5 pom.xml files.
+    -->
+    <properties>
+        <java.version>21</java.version>
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <kafka.version>3.7.0</kafka.version>
+        <lombok.version>1.18.32</lombok.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <testcontainers.version>1.19.8</testcontainers.version>
+    </properties>
+
+    <!--
+        DEPENDENCY MANAGEMENT: this does NOT add the dependency to
+        any service. It only says "if a child asks for this library,
+        use THIS version." Children still have to ask for it.
+
+        WHY? Because not every service needs every library.
+        The notification-service doesn't need PostgreSQL.
+        The shipment-service doesn't need MongoDB.
+        We define versions centrally but let each child pick what it needs.
+    -->
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Spring Cloud BOM (Bill of Materials) -->
+            <!-- A BOM is a special pom that defines dozens of versions
+                 at once for a whole ecosystem. One import = all Spring
+                 Cloud versions aligned. Without this you'd get version
+                 conflicts between Spring Cloud components. -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <!-- "import" scope means: pull in all version definitions
+                     from that BOM into OUR dependencyManagement block -->
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Testcontainers BOM: spins up real Docker containers in tests
+                 (real Kafka, real PostgreSQL, real MongoDB) so tests run
+                 against the actual database, not a fake in-memory stub -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <!--
+        DEPENDENCIES here (outside dependencyManagement) DO get added
+        to EVERY child service automatically. Only put things here
+        that every single service genuinely needs.
+    -->
+    <dependencies>
+
+        <!-- Lombok: removes boilerplate Java code.
+             Instead of writing 50 lines of getters/setters/constructors,
+             you write @Data on a class and Lombok generates it at
+             compile time. Every service uses this. -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <!-- "provided" = needed at compile time to generate code,
+                 but NOT included in the final jar (the generated
+                 code is already there) -->
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Spring Boot Test: JUnit 5, Mockito, AssertJ bundled together.
+             Every service needs tests. scope=test means this jar is
+             only on the classpath during `mvn test`, not in production. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <!--
+        BUILD PLUGINS: tools that run during the Maven build process.
+    -->
+    <build>
+        <pluginManagement>
+            <plugins>
+
+                <!-- Spring Boot Maven Plugin: packages your app into a
+                     "fat jar" — a single .jar file that contains your code
+                     AND all its dependencies. You can then run it with
+                     `java -jar shipment-service.jar` anywhere, no setup needed. -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <!-- Don't bundle Lombok into the final jar —
+                                 it already did its job at compile time -->
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+
+                <!-- Compiler Plugin: tells Maven to use Java 21 and
+                     enables annotation processors (Lombok, MapStruct)
+                     which generate code at compile time -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                            <!-- MapStruct: generates type-safe object mappers.
+                                 Instead of manually copying fields from a
+                                 ShipmentEntity to a ShipmentDTO, MapStruct
+                                 generates that code for you at compile time. -->
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>

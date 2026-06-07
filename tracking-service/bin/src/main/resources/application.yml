@@ -1,0 +1,89 @@
+server:
+  port: 8082
+  shutdown: graceful
+
+spring:
+  application:
+    name: tracking-service
+
+  # ─────────────────────────────────────────────
+  # MONGODB
+  # ─────────────────────────────────────────────
+  data:
+    mongodb:
+      # MongoDB connection URI. Format:
+      # mongodb://username:password@host:port/database
+      # The ?authSource=admin tells MongoDB which DB to authenticate against.
+      uri: mongodb://${MONGO_USER:tracking_user}:${MONGO_PASSWORD:tracking_pass}@${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DB:tracking_db}?authSource=admin
+
+      # auto-index-creation: in development, Spring reads your
+      # @Indexed/@CompoundIndex annotations on @Document classes
+      # and creates MongoDB indexes automatically.
+      # In production: set to false and create indexes via migration scripts.
+      # Why? Auto-creation in production can block the collection on
+      # large datasets while the index builds.
+      auto-index-creation: true
+
+    # ─────────────────────────────────────────────
+    # REDIS
+    # ─────────────────────────────────────────────
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 2
+
+  # ─────────────────────────────────────────────
+  # KAFKA
+  # ─────────────────────────────────────────────
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+
+    consumer:
+      group-id: tracking-service-group
+      # Note: different group-id from shipment-service-group.
+      # Kafka topics can have multiple consumer groups.
+      # tracking-service-group and shipment-service-group can BOTH
+      # consume the same topic independently — each gets all messages.
+      # This is the fan-out pattern: one event, multiple consumers.
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "com.shipment.*"
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+
+logging:
+  level:
+    com.shipment: INFO
+    org.springframework.kafka: WARN
+    org.springframework.data.mongodb: WARN

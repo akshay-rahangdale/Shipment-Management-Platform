@@ -1,0 +1,272 @@
+# WHAT IS application.yml?
+#
+# This is your service's configuration file. Instead of hardcoding
+# values like port numbers, database URLs, and Kafka addresses in Java
+# code, you put them here. Why? Two reasons:
+#
+# 1. Environment-specific values: localhost works on your laptop,
+#    but in Kubernetes the DB is at postgres-svc.default.svc.cluster.local.
+#    You change the config file (or inject env vars), not the code.
+#
+# 2. Secrets: passwords should NEVER be in Java code (it ends up in Git).
+#    In application.yml you use ${ENV_VAR_NAME} syntax, and Spring
+#    substitutes the actual value from environment variables at runtime.
+#    Kubernetes injects those env vars from Kubernetes Secrets.
+#
+# YAML uses indentation (2 spaces) to show hierarchy.
+# spring.datasource.url is written as:
+#   spring:
+#     datasource:
+#       url: ...
+
+# ─────────────────────────────────────────────
+# SERVER
+# ─────────────────────────────────────────────
+server:
+  port: 8081
+  # Why 8081? The API Gateway runs on 8080. Each service gets its own port
+  # so they can all run on your laptop simultaneously for development.
+  # In Kubernetes, each service is in its own pod so port conflicts
+  # don't matter — but we keep distinct ports for local docker-compose.
+
+  servlet:
+    context-path: /
+  shutdown: graceful
+  # graceful shutdown: when Kubernetes sends SIGTERM (stop signal),
+  # Spring finishes in-flight requests before shutting down.
+  # Without this, active requests get killed mid-processing.
+
+
+# ─────────────────────────────────────────────
+# APPLICATION IDENTITY
+# ─────────────────────────────────────────────
+spring:
+  application:
+    name: shipment-service
+    # This name appears in logs, metrics, and distributed traces.
+    # Prometheus uses it to label metrics: service="shipment-service"
+    # Without it, logs from all services look the same.
+
+
+# ─────────────────────────────────────────────
+# DATABASE (PostgreSQL via JPA)
+# ─────────────────────────────────────────────
+  datasource:
+    # ${POSTGRES_HOST:localhost} means:
+    # "use the POSTGRES_HOST environment variable if set,
+    #  otherwise default to 'localhost'"
+    # On your laptop: localhost (Docker Compose)
+    # In Kubernetes: postgres-svc (the Kubernetes Service name)
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:shipment_db}
+    username: ${POSTGRES_USER:shipment_user}
+    password: ${POSTGRES_PASSWORD:shipment_pass}
+    driver-class-name: org.postgresql.Driver
+
+    # HikariCP connection pool (Spring Boot's default, and the fastest available)
+    # A connection pool keeps N database connections open and reuses them.
+    # Without pooling: every query opens a new TCP connection to Postgres (~50ms).
+    # With pooling: grab an existing connection from the pool (~0.1ms).
+    hikari:
+      maximum-pool-size: 20
+      # 20 simultaneous DB connections. More than this and Postgres starts
+      # rejecting connections. Tune based on: expected_rps / avg_query_ms * 1000
+      minimum-idle: 5
+      # Keep 5 connections warm even when traffic is low.
+      # Prevents the cold-start latency spike when traffic picks up.
+      connection-timeout: 30000   # 30s — how long to wait for a connection from the pool
+      idle-timeout: 600000        # 10min — how long an idle connection lives before being closed
+      max-lifetime: 1800000       # 30min — maximum lifetime of any connection (prevents stale connections)
+
+  jpa:
+    # hibernate.ddl-auto options:
+    #   create       — drops and recreates schema on every start (destroys data!)
+    #   create-drop  — creates on start, drops on shutdown (for tests)
+    #   update       — tries to alter existing schema (dangerous in production)
+    #   validate     — checks schema matches entities, fails if not (safe)
+    #   none         — does nothing (we use Flyway instead — the right approach)
+    hibernate:
+      ddl-auto: validate
+      # validate: on startup, Hibernate checks that the DB schema matches
+      # your @Entity classes. If you added a @Column but forgot a Flyway
+      # migration, the app fails fast instead of silently ignoring the mismatch.
+
+    show-sql: false
+    # Never true in production — logs every SQL query, fills disk fast.
+    # For debugging locally, set to true temporarily.
+
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        # format_sql: makes SQL readable in logs when show-sql=true.
+        # "SELECT s.id,s.tracking_number FROM shipments s WHERE s.id=$1"
+        # instead of one unreadable line.
+
+        jdbc:
+          batch_size: 50
+          # batch_size: when saving 100 records, Hibernate groups them into
+          # batches of 50 and sends 2 SQL calls instead of 100.
+          # Critical for bulk operations (importing shipments, etc.)
+
+  # ─────────────────────────────────────────────
+  # FLYWAY (Database migrations)
+  # ─────────────────────────────────────────────
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # Flyway looks for SQL files in src/main/resources/db/migration/
+    # Files must be named: V{number}__{description}.sql
+    # e.g. V1__create_shipments_table.sql
+    # Flyway runs them in order and tracks which ones ran in a
+    # flyway_schema_history table it manages automatically.
+    baseline-on-migrate: true
+    # If the DB already has tables (from before Flyway was added),
+    # baseline-on-migrate: marks the current state as V1 baseline
+    # instead of failing because the table already exists.
+
+
+# ─────────────────────────────────────────────
+# KAFKA
+# ─────────────────────────────────────────────
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    # bootstrap-servers: the address of Kafka brokers.
+    # "Bootstrap" means this is the initial contact point — Kafka
+    # then tells your client about all other brokers in the cluster.
+    # Multiple brokers for resilience: "broker1:9092,broker2:9092,broker3:9092"
+
+    producer:
+      # key-serializer: Kafka messages have a key and a value.
+      # The key is typically a String (e.g. tracking number) used for
+      # partitioning — same key always goes to same partition,
+      # guaranteeing ordering for that shipment.
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+      # value-serializer: we serialize the Java event object to JSON.
+      # JsonSerializer converts your ShipmentCreatedEvent POJO to
+      # {"trackingNumber":"SHIP123","status":"CREATED",...}
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+      # acks=all: the producer only considers a message "sent" after
+      # ALL Kafka brokers that hold that partition have acknowledged it.
+      # acks=0 is fastest but can lose messages if a broker dies.
+      # acks=all is slowest but guarantees no message loss. For shipments, use all.
+      acks: all
+
+      # retries: if a publish fails (broker temporarily unavailable),
+      # retry up to 3 times before giving up and throwing an exception.
+      retries: 3
+
+      properties:
+        # enable.idempotence: even with retries, Kafka guarantees
+        # each message is written exactly once — no duplicates
+        # even if the producer retries after a network timeout.
+        enable.idempotence: true
+
+    consumer:
+      group-id: shipment-service-group
+      # group-id: all instances of shipment-service share this group ID.
+      # Kafka distributes partitions across group members — if you run
+      # 3 instances, each reads from different partitions simultaneously.
+      # If you used a unique group-id per instance, each instance would
+      # read ALL messages (fan-out), not share the load.
+
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+      # auto-offset-reset: what to do when this consumer group has no
+      # committed offset (first time it runs, or after a reset).
+      # earliest: start from the oldest message in the topic.
+      # latest: start from new messages only.
+      # For shipments, earliest is safer — don't miss events.
+      auto-offset-reset: earliest
+
+      # enable-auto-commit: false means Spring Kafka controls when to
+      # commit offsets (mark a message as "processed").
+      # Auto-commit would mark messages as done even if your code throws
+      # an exception mid-processing. Manual commit only happens after
+      # successful processing — ensuring at-least-once delivery.
+      enable-auto-commit: false
+
+      properties:
+        spring.json.trusted.packages: "com.shipment.*"
+        # Security: only deserialize classes from our own packages.
+        # Without this, a malicious Kafka message could trigger
+        # deserialization of an arbitrary class (deserialization attack).
+
+
+# ─────────────────────────────────────────────
+# REDIS
+# ─────────────────────────────────────────────
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      # password: empty string by default (no auth for local dev).
+      # In production, always set a password via Kubernetes Secret.
+
+      lettuce:
+        # lettuce is the Redis client Spring Boot uses by default (vs jedis).
+        # It's non-blocking and works well with Spring's async model.
+        pool:
+          max-active: 10   # max simultaneous Redis connections
+          max-idle: 5      # idle connections to keep warm
+          min-idle: 2
+
+  # Cache configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000  # 5 minutes in milliseconds
+      # This is the default TTL for ALL @Cacheable caches unless
+      # overridden per-cache in the CacheConfig class.
+      cache-null-values: false
+      # Don't cache null results — a null might mean "not found yet"
+      # and we don't want that stale in cache.
+
+
+# ─────────────────────────────────────────────
+# ACTUATOR (Health checks, metrics)
+# ─────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+        # Expose only these endpoints. Never expose 'env' or 'configprops'
+        # in production — they print out all config values including secrets.
+  endpoint:
+    health:
+      show-details: when-authorized
+      # show-details: authenticated users see full health info
+      # (DB connection pool status, Kafka consumer lag, Redis ping).
+      # Unauthenticated requests just see {"status":"UP"}.
+      # Kubernetes liveness probe hits /actuator/health — it only needs UP/DOWN.
+      probes:
+        enabled: true
+        # Enables /actuator/health/liveness and /actuator/health/readiness
+        # separately. Kubernetes needs both:
+        # - liveness: "is the process alive?" → restart if DOWN
+        # - readiness: "is it ready to serve traffic?" → remove from load balancer if DOWN
+
+
+# ─────────────────────────────────────────────
+# LOGGING
+# ─────────────────────────────────────────────
+logging:
+  level:
+    com.shipment: INFO
+    # Our code logs at INFO and above (INFO, WARN, ERROR).
+    # DEBUG would log every Spring internal operation — too noisy.
+    org.springframework.kafka: WARN
+    # Kafka client logs a lot at INFO level (heartbeats, rebalances).
+    # WARN silences the noise but keeps important messages.
+    org.hibernate.SQL: WARN
+    # Silences Hibernate SQL logging in production.
+    # To see SQL locally: change to DEBUG (same effect as show-sql: true).
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    # Structured format: timestamp, thread, log level, class, message.
+    # In production, we'd switch to JSON format for log aggregation tools
+    # (Elasticsearch, CloudWatch Logs) to parse programmatically.

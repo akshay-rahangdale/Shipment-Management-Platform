@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.shipment</groupId>
+        <artifactId>shipment-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>notification-service</artifactId>
+    <name>Notification Service</name>
+
+    <!--
+        notification-service has NO database at all.
+        It only:
+        1. Consumes Kafka events (anomaly.alerts, shipment.events)
+        2. Sends emails via JavaMailSender
+        3. Sends SMS via Twilio (or a stub)
+        4. Exposes /actuator/health for Kubernetes
+
+        This is a pure event-driven service. Zero SQL. Zero MongoDB.
+        Its pom.xml is the simplest of all 5 services.
+    -->
+
+    <dependencies>
+
+        <!-- We still need 'web' for the /actuator endpoints.
+             Even if we don't expose REST APIs, Spring Boot's
+             Actuator needs an embedded server to serve health checks. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Kafka consumer: listens to anomaly.alerts and shipment.events -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+        <!--
+            spring-boot-starter-mail: JavaMailSender — lets you send
+            emails with a few lines of code. Spring auto-configures it
+            from your application.yml (smtp host, port, credentials).
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!--
+            twilio: official SDK for sending SMS.
+            In Phase 1 we'll stub this behind an interface so tests
+            don't actually send real SMS messages.
+        -->
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>10.1.0</version>
+        </dependency>
+
+        <!-- Redis: idempotency keys — prevents sending the same
+             delay alert SMS twice if Kafka retries the message -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

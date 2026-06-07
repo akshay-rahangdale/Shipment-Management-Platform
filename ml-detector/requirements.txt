@@ -1,0 +1,66 @@
+# WHY PYTHON FOR THE ML SERVICE?
+# The Java ecosystem (DL4J, Tribuo) has ML libraries but they're
+# immature compared to Python's scikit-learn, pandas, numpy.
+# The ML community writes in Python — all tutorials, models,
+# and pre-trained weights assume Python.
+# Running a lightweight Python Flask service alongside Java Spring
+# Boot services is completely normal in microservice architectures.
+# They communicate through Kafka — language doesn't matter.
+
+# ─────────────────────────────────────────────
+# WEB FRAMEWORK
+# ─────────────────────────────────────────────
+flask==3.0.3
+# Flask: the web framework. Lightweight by design.
+# We only need /health for Kubernetes probes and /predict
+# as an internal debug endpoint. Flask is perfect for this.
+
+# ─────────────────────────────────────────────
+# KAFKA CLIENT
+# ─────────────────────────────────────────────
+confluent-kafka==2.4.0
+# confluent-kafka: the most robust Python Kafka client.
+# Maintained by Confluent (the company behind Kafka).
+# We use it to consume from tracking.updates and
+# produce to anomaly.alerts.
+
+# ─────────────────────────────────────────────
+# ML / DATA
+# ─────────────────────────────────────────────
+scikit-learn==1.5.0
+# scikit-learn: the Isolation Forest model lives here.
+# Also provides StandardScaler (feature normalization),
+# train_test_split, and joblib for saving/loading models.
+
+numpy==1.26.4
+# numpy: fast array operations. Feature extraction produces
+# numpy arrays that feed directly into scikit-learn models.
+
+pandas==2.2.2
+# pandas: used during model training to load historical
+# shipment data from CSV and compute rolling statistics.
+# Not used in real-time inference (too slow for hot path).
+
+joblib==1.4.2
+# joblib: saves trained model to disk as model.pkl.
+# On startup, ml-detector loads model.pkl rather than
+# re-training from scratch every time it restarts.
+
+# ─────────────────────────────────────────────
+# DATABASE / CACHE
+# ─────────────────────────────────────────────
+pymongo==4.7.3
+# pymongo: reads the tracking_records collection to pull
+# historical checkpoints for a shipment when scoring it.
+
+redis==5.0.6
+# redis-py: writes ml_signals back to the tracking record
+# and manages the idempotency key for alerts.
+
+# ─────────────────────────────────────────────
+# OBSERVABILITY
+# ─────────────────────────────────────────────
+prometheus-client==0.20.0
+# Exposes /metrics in Prometheus format so Kubernetes
+# can scrape anomaly scores, prediction latency, etc.
+# Same pattern as the Java services' micrometer-prometheus.
