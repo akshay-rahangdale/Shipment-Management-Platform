@@ -2,6 +2,7 @@ D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shi
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\model\enums\ShipmentStatus.java
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\dto\response\CustomerResponse.java
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\repository\SlaPolicyRepository.java
+D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\controller\ShipmentController.java
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\dto\request\UpdateShipmentRequest.java
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\dto\response\ShipmentSummaryResponse.java
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\mapper\ShipmentMapper.java
@@ -17,5 +18,6 @@ D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shi
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\model\Customer.java
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\dto\response\ShipmentResponse.java
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\service\ShipmentService.java
+D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\service\TrackingNumberGenerator.java
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\model\ShipmentEvent.java
 D:\Spring Boot\shipment-platform\shipment-service\src\main\java\com\shipment\shipmentservice\repository\CarrierRepository.java
