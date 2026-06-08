@@ -82,6 +82,10 @@ management:
       probes:
         enabled: true
 
+kafka:
+  topics:
+    tracking-updates: tracking.updates
+
 logging:
   level:
     com.shipment: INFO
