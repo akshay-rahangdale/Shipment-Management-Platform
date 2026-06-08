@@ -58,8 +58,8 @@ spring:
     # On your laptop: localhost (Docker Compose)
     # In Kubernetes: postgres-svc (the Kubernetes Service name)
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:shipment_db}
-    username: ${POSTGRES_USER:shipment_user}
-    password: ${POSTGRES_PASSWORD:shipment_pass}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
     # HikariCP connection pool (Spring Boot's default, and the fastest available)
@@ -254,6 +254,22 @@ management:
 # ─────────────────────────────────────────────
 # LOGGING
 # ─────────────────────────────────────────────
+
+kafka:
+  topics:
+    shipment-events: shipment.events
+    shipment-updates: shipment.updates
+ 
+spring:
+  task:
+    execution:
+      pool:
+        core-size: 5
+        max-size: 20
+        queue-capacity: 100
+      thread-name-prefix: async-
+
+
 logging:
   level:
     com.shipment: INFO

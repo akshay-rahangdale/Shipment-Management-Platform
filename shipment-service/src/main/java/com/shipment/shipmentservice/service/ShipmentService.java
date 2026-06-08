@@ -4,6 +4,7 @@ import com.shipment.shipmentservice.dto.request.CreateShipmentRequest;
 import com.shipment.shipmentservice.dto.request.UpdateShipmentRequest;
 import com.shipment.shipmentservice.dto.response.ShipmentResponse;
 import com.shipment.shipmentservice.dto.response.ShipmentSummaryResponse;
+import com.shipment.shipmentservice.kafka.producer.ShipmentEventProducer;
 import com.shipment.shipmentservice.mapper.ShipmentMapper;
 import com.shipment.shipmentservice.model.*;
 import com.shipment.shipmentservice.model.enums.EventType;
@@ -35,7 +36,8 @@ public class ShipmentService {
     private final ShipmentEventRepository eventRepository;
     private final ShipmentMapper         mapper;
     private final TrackingNumberGenerator trackingNumberGenerator;
-
+    private final ShipmentEventProducer   eventProducer;
+    
     // ─────────────────────────────────────────────
     // CREATE
     // ─────────────────────────────────────────────
@@ -137,6 +139,7 @@ public class ShipmentService {
         Shipment updated = shipmentRepository.save(shipment);
 
         log.info("Shipment updated id={} status={}", id, updated.getStatus());
+         eventProducer.publishShipmentUpdated(updated, previousStatus, request.getUpdateReason());
 
         return mapper.toResponse(updated);
     }
@@ -166,7 +169,7 @@ public class ShipmentService {
         shipmentRepository.save(shipment);
 
         log.info("Shipment marked delivered id={}", id);
-
+        eventProducer.publishShipmentDelivered(shipment);
         return mapper.toResponse(shipment);
     }
 

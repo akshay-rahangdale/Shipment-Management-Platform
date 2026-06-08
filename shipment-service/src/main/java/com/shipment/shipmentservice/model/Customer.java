@@ -60,9 +60,9 @@ public class Customer {
 
     @OneToMany(mappedBy = "sender", fetch = FetchType.LAZY)
     @Builder.Default
-    private List<ShipmentEvent> sentShipments = new ArrayList<>();
+    private List<Shipment> sentShipments = new ArrayList<>();
 
     @OneToMany(mappedBy = "recipient", fetch = FetchType.LAZY)
     @Builder.Default
-    private List<ShipmentEvent> receivedShipments = new ArrayList<>();
+    private List<Shipment> receivedShipments = new ArrayList<>();
 }

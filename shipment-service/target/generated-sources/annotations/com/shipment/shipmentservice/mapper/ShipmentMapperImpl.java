@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-06-07T13:23:36+0530",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.11 (Oracle Corporation)"
+    date = "2026-06-08T10:32:08+0530",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.46.0.v20260407-0427, environment: Java 21.0.10 (Eclipse Adoptium)"
 )
 @Component
 public class ShipmentMapperImpl implements ShipmentMapper {
@@ -114,12 +114,12 @@ public class ShipmentMapperImpl implements ShipmentMapper {
 
         Shipment.ShipmentBuilder shipment = Shipment.builder();
 
-        shipment.originAddress( request.getOriginAddress() );
-        shipment.destinationAddress( request.getDestinationAddress() );
-        shipment.weightKg( request.getWeightKg() );
         shipment.declaredValue( request.getDeclaredValue() );
+        shipment.destinationAddress( request.getDestinationAddress() );
         shipment.estimatedDelivery( request.getEstimatedDelivery() );
+        shipment.originAddress( request.getOriginAddress() );
         shipment.specialInstructions( request.getSpecialInstructions() );
+        shipment.weightKg( request.getWeightKg() );
 
         return shipment.build();
     }
@@ -130,9 +130,6 @@ public class ShipmentMapperImpl implements ShipmentMapper {
             return;
         }
 
-        if ( request.getStatus() != null ) {
-            shipment.setStatus( request.getStatus() );
-        }
         if ( request.getDestinationAddress() != null ) {
             shipment.setDestinationAddress( request.getDestinationAddress() );
         }
@@ -141,6 +138,9 @@ public class ShipmentMapperImpl implements ShipmentMapper {
         }
         if ( request.getSpecialInstructions() != null ) {
             shipment.setSpecialInstructions( request.getSpecialInstructions() );
+        }
+        if ( request.getStatus() != null ) {
+            shipment.setStatus( request.getStatus() );
         }
     }
 }

@@ -59,7 +59,7 @@ public class Carrier {
 
     @OneToMany(mappedBy = "carrier", fetch = FetchType.LAZY)
     @Builder.Default
-    private List<ShipmentEvent> shipments = new ArrayList<>();
+    private List<Shipment> shipments = new ArrayList<>();
 
     @OneToMany(mappedBy = "carrier", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @Builder.Default
