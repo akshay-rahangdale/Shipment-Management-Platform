@@ -1,0 +1,10 @@
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\config\RedisConfig.java
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\kafka\event\AnomalyAlertEvent.java
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\service\SmsService.java
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\service\EmailService.java
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\kafka\event\ShipmentCreatedEvent.java
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\kafka\event\ShipmentUpdatedEvent.java
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\NotificationServiceApplication.java
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\kafka\consumer\NotificationConsumer.java
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\config\KafkaConfig.java
+D:\Spring Boot\shipment-platform\notification-service\src\main\java\com\shipment\notificationservice\service\IdempotencyService.java

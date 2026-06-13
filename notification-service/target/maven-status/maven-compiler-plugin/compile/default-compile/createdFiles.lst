@@ -1,0 +1,13 @@
+com\shipment\notificationservice\kafka\event\ShipmentUpdatedEvent.class
+com\shipment\notificationservice\service\SmsService.class
+com\shipment\notificationservice\service\EmailService.class
+com\shipment\notificationservice\kafka\event\ShipmentCreatedEvent$ShipmentCreatedEventBuilder.class
+com\shipment\notificationservice\service\IdempotencyService.class
+com\shipment\notificationservice\kafka\event\AnomalyAlertEvent$AnomalyAlertEventBuilder.class
+com\shipment\notificationservice\NotificationServiceApplication.class
+com\shipment\notificationservice\kafka\event\ShipmentCreatedEvent.class
+com\shipment\notificationservice\kafka\event\ShipmentUpdatedEvent$ShipmentUpdatedEventBuilder.class
+com\shipment\notificationservice\config\KafkaConfig.class
+com\shipment\notificationservice\config\RedisConfig.class
+com\shipment\notificationservice\kafka\consumer\NotificationConsumer.class
+com\shipment\notificationservice\kafka\event\AnomalyAlertEvent.class
