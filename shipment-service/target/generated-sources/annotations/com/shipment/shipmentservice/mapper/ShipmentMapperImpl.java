@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-06-08T10:32:08+0530",
+    date = "2026-06-13T09:44:42+0530",
     comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.46.0.v20260407-0427, environment: Java 21.0.10 (Eclipse Adoptium)"
 )
 @Component
@@ -28,11 +28,11 @@ public class ShipmentMapperImpl implements ShipmentMapper {
 
         CustomerResponse.CustomerResponseBuilder customerResponse = CustomerResponse.builder();
 
+        customerResponse.address( customer.getAddress() );
+        customerResponse.email( customer.getEmail() );
         customerResponse.id( customer.getId() );
         customerResponse.name( customer.getName() );
-        customerResponse.email( customer.getEmail() );
         customerResponse.phone( customer.getPhone() );
-        customerResponse.address( customer.getAddress() );
 
         return customerResponse.build();
     }
@@ -45,10 +45,10 @@ public class ShipmentMapperImpl implements ShipmentMapper {
 
         CarrierResponse.CarrierResponseBuilder carrierResponse = CarrierResponse.builder();
 
-        carrierResponse.id( carrier.getId() );
-        carrierResponse.name( carrier.getName() );
         carrierResponse.code( carrier.getCode() );
         carrierResponse.contactEmail( carrier.getContactEmail() );
+        carrierResponse.id( carrier.getId() );
+        carrierResponse.name( carrier.getName() );
 
         return carrierResponse.build();
     }
@@ -61,21 +61,21 @@ public class ShipmentMapperImpl implements ShipmentMapper {
 
         ShipmentResponse.ShipmentResponseBuilder shipmentResponse = ShipmentResponse.builder();
 
-        shipmentResponse.id( shipment.getId() );
-        shipmentResponse.trackingNumber( shipment.getTrackingNumber() );
-        shipmentResponse.sender( toCustomerResponse( shipment.getSender() ) );
-        shipmentResponse.recipient( toCustomerResponse( shipment.getRecipient() ) );
-        shipmentResponse.carrier( toCarrierResponse( shipment.getCarrier() ) );
-        shipmentResponse.status( shipment.getStatus() );
-        shipmentResponse.originAddress( shipment.getOriginAddress() );
-        shipmentResponse.destinationAddress( shipment.getDestinationAddress() );
-        shipmentResponse.weightKg( shipment.getWeightKg() );
-        shipmentResponse.declaredValue( shipment.getDeclaredValue() );
-        shipmentResponse.estimatedDelivery( shipment.getEstimatedDelivery() );
         shipmentResponse.actualDelivery( shipment.getActualDelivery() );
-        shipmentResponse.specialInstructions( shipment.getSpecialInstructions() );
+        shipmentResponse.carrier( toCarrierResponse( shipment.getCarrier() ) );
         shipmentResponse.createdAt( shipment.getCreatedAt() );
+        shipmentResponse.declaredValue( shipment.getDeclaredValue() );
+        shipmentResponse.destinationAddress( shipment.getDestinationAddress() );
+        shipmentResponse.estimatedDelivery( shipment.getEstimatedDelivery() );
+        shipmentResponse.id( shipment.getId() );
+        shipmentResponse.originAddress( shipment.getOriginAddress() );
+        shipmentResponse.recipient( toCustomerResponse( shipment.getRecipient() ) );
+        shipmentResponse.sender( toCustomerResponse( shipment.getSender() ) );
+        shipmentResponse.specialInstructions( shipment.getSpecialInstructions() );
+        shipmentResponse.status( shipment.getStatus() );
+        shipmentResponse.trackingNumber( shipment.getTrackingNumber() );
         shipmentResponse.updatedAt( shipment.getUpdatedAt() );
+        shipmentResponse.weightKg( shipment.getWeightKg() );
 
         shipmentResponse.statusDescription( shipment.getStatus().getDescription() );
         shipmentResponse.slaAtRisk( shipment.isSlaAtRisk(3) );
@@ -92,12 +92,12 @@ public class ShipmentMapperImpl implements ShipmentMapper {
 
         ShipmentSummaryResponse.ShipmentSummaryResponseBuilder shipmentSummaryResponse = ShipmentSummaryResponse.builder();
 
-        shipmentSummaryResponse.id( shipment.getId() );
-        shipmentSummaryResponse.trackingNumber( shipment.getTrackingNumber() );
-        shipmentSummaryResponse.status( shipment.getStatus() );
+        shipmentSummaryResponse.createdAt( shipment.getCreatedAt() );
         shipmentSummaryResponse.destinationAddress( shipment.getDestinationAddress() );
         shipmentSummaryResponse.estimatedDelivery( shipment.getEstimatedDelivery() );
-        shipmentSummaryResponse.createdAt( shipment.getCreatedAt() );
+        shipmentSummaryResponse.id( shipment.getId() );
+        shipmentSummaryResponse.status( shipment.getStatus() );
+        shipmentSummaryResponse.trackingNumber( shipment.getTrackingNumber() );
 
         shipmentSummaryResponse.statusDescription( shipment.getStatus().getDescription() );
         shipmentSummaryResponse.slaAtRisk( shipment.isSlaAtRisk(3) );
