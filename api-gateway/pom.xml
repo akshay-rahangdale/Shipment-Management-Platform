@@ -65,6 +65,12 @@
             <!-- Note: *-reactive because gateway is WebFlux-based -->
         </dependency>
 
+      <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!--
             spring-boot-starter-security + oauth2-resource-server:
             The gateway validates JWT tokens before forwarding requests.

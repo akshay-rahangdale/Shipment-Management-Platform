@@ -12,22 +12,20 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-        http
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+        return http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges
                 .pathMatchers("/actuator/health/**").permitAll()
+                .pathMatchers("/actuator/metrics").permitAll()
                 .pathMatchers("/fallback/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/v1/tracking/**").authenticated()
-                .pathMatchers(HttpMethod.POST, "/api/v1/shipments/**").authenticated()
-                .pathMatchers(HttpMethod.PATCH, "/api/v1/shipments/**").authenticated()
-                .pathMatchers("/api/v1/shipments/at-risk").hasRole("ADMIN")
+                .pathMatchers("/api/v1/shipments/**").authenticated()
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> {})
-            );
-
-        return http.build();
+            )
+            .build();
     }
 }

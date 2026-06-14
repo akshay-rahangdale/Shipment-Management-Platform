@@ -1,8 +1,5 @@
 server:
   port: 8080
-  # Gateway is the only service exposed to the internet.
-  # All other services run on internal ports (8081-8085) and are
-  # NOT accessible directly — only through the gateway.
   shutdown: graceful
 
 spring:
@@ -15,49 +12,27 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
 
-  # ─────────────────────────────────────────────
-  # SPRING CLOUD GATEWAY ROUTES
-  # ─────────────────────────────────────────────
   cloud:
     gateway:
       routes:
 
-        # ROUTE 1: Shipment Service
         - id: shipment-service
-          # uri: where to forward the request.
-          # lb:// means "use load balancing" — when multiple instances
-          # of shipment-service are running (Kubernetes HPA scaled up),
-          # the gateway round-robins between them.
-          # ${SHIPMENT_SERVICE_URL:http://localhost:8081} means:
-          # use env var in production, fallback to localhost for local dev.
           uri: ${SHIPMENT_SERVICE_URL:http://localhost:8081}
           predicates:
-            # Only match requests whose path starts with /api/v1/shipments
             - Path=/api/v1/shipments/**
           filters:
-            # StripPrefix=2 removes the first 2 path segments.
-            # /api/v1/shipments/123 → /shipments/123
-            # The downstream service doesn't know it's behind a gateway.
             - StripPrefix=2
-
-            # Rate limiting: max 100 requests per minute per client.
-            # Uses Redis internally (token bucket algorithm).
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 100    # tokens added per second
-                redis-rate-limiter.burstCapacity: 200    # max tokens in bucket
-                redis-rate-limiter.requestedTokens: 1    # each request costs 1 token
-                key-resolver: "#{@clientIpKeyResolver}"  # rate limit by IP address
-
-            # Circuit Breaker: if shipment-service is down or slow,
-            # stop forwarding requests and return fallback immediately.
-            # This prevents the gateway from hanging on dead downstream services.
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@clientIpKeyResolver}"
             - name: CircuitBreaker
               args:
                 name: shipmentServiceCB
                 fallbackUri: forward:/fallback/shipment-service
 
-        # ROUTE 2: Tracking Service
         - id: tracking-service
           uri: ${TRACKING_SERVICE_URL:http://localhost:8082}
           predicates:
@@ -66,7 +41,7 @@ spring:
             - StripPrefix=2
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 200   # tracking is read-heavy, higher limit
+                redis-rate-limiter.replenishRate: 200
                 redis-rate-limiter.burstCapacity: 400
                 redis-rate-limiter.requestedTokens: 1
                 key-resolver: "#{@clientIpKeyResolver}"
@@ -75,7 +50,6 @@ spring:
                 name: trackingServiceCB
                 fallbackUri: forward:/fallback/tracking-service
 
-        # ROUTE 3: Notification Service (internal only — lower rate limit)
         - id: notification-service
           uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
           predicates:
@@ -88,12 +62,12 @@ spring:
                 redis-rate-limiter.burstCapacity: 40
                 redis-rate-limiter.requestedTokens: 1
                 key-resolver: "#{@clientIpKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: notificationServiceCB
+                fallbackUri: forward:/fallback/notification-service
 
-      # Global filters applied to ALL routes
       default-filters:
-        # Adds a unique X-Request-ID header to every request.
-        # This ID propagates through all services so you can trace
-        # a single request across shipment-service → tracking-service logs.
         - AddRequestHeader=X-Request-Source, api-gateway
 
       globalcors:
@@ -101,7 +75,7 @@ spring:
           '[/**]':
             allowedOriginPatterns:
               - "https://*.shipment-platform.com"
-              - "http://localhost:*"    # local development
+              - "http://localhost:*"
             allowedMethods:
               - GET
               - POST
@@ -112,21 +86,31 @@ spring:
               - "*"
             allowCredentials: true
 
-  # ─────────────────────────────────────────────
-  # JWT VALIDATION
-  # ─────────────────────────────────────────────
   security:
     oauth2:
       resourceserver:
         jwt:
-          # jwk-set-uri: the URL where the gateway fetches the public keys
-          # used to verify JWT token signatures.
-          # Every request with a Bearer token is validated against these keys.
-          # If the token is forged or expired, the gateway rejects it with 401
-          # before it ever reaches your microservices.
           jwk-set-uri: ${JWT_JWK_URI:http://localhost:8090/oauth2/jwks}
           issuer-uri: ${JWT_ISSUER_URI:http://localhost:8090}
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      shipmentServiceCB:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+      trackingServiceCB:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+      notificationServiceCB:
+        slidingWindowSize: 5
+        failureRateThreshold: 60
+        waitDurationInOpenState: 15s
+        permittedNumberOfCallsInHalfOpenState: 2
 
 management:
   endpoints:
@@ -135,10 +119,12 @@ management:
         include: health,info,metrics,prometheus
   endpoint:
     health:
+      show-details: when-authorized
       probes:
         enabled: true
 
 logging:
   level:
-    org.springframework.cloud.gateway: INFO
     com.shipment: INFO
+    org.springframework.cloud.gateway: INFO
+    reactor.netty: WARN
