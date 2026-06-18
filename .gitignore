@@ -1,102 +1,42 @@
-# ─────────────────────────────────────────────
-# MAVEN / JAVA (applies to all 5 Spring Boot services)
-# ─────────────────────────────────────────────
+# Maven
 target/
-*.class
-*.jar
-*.war
-!.mvn/wrapper/maven-wrapper.jar
 
-# Maven wrapper logs
-.mvn/wrapper/maven-wrapper.properties.bak
-
-# ─────────────────────────────────────────────
-# IDE FILES
-# ─────────────────────────────────────────────
+# Gradle
+build/
 
 # IntelliJ
 .idea/
 *.iml
-*.iws
-out/
-
-# Eclipse
-.classpath
-.project
-.settings/
-bin/
 
 # VS Code
 .vscode/
 
-# ─────────────────────────────────────────────
-# PYTHON (ml-detector)
-# ─────────────────────────────────────────────
-__pycache__/
-*.py[cod]
-*$py.class
-*.pyc
+# Eclipse
+.project
+.classpath
+.settings/
 
-# Virtual environments
-venv/
-.venv/
-env/
-ENV/
-
-# Trained model — generated locally, never commit binary model weights
-ml-detector/model/*.pkl
-ml-detector/**/*.pkl
-
-# pip
-pip-log.txt
-pip-delete-this-directory.txt
-
-# ─────────────────────────────────────────────
-# ENVIRONMENT / SECRETS — NEVER COMMIT THESE
-# ─────────────────────────────────────────────
-.env
-.env.local
-.env.*.local
-*.pem
-*.key
-application-local.yml
-application-secrets.yml
-
-# ─────────────────────────────────────────────
-# LOGS
-# ─────────────────────────────────────────────
-*.log
+# Logs
 logs/
-spring.log
+*.log
 
-# ─────────────────────────────────────────────
-# OS FILES
-# ─────────────────────────────────────────────
+# OS
 .DS_Store
 Thumbs.db
-desktop.ini
 
-# ─────────────────────────────────────────────
-# DOCKER
-# ─────────────────────────────────────────────
-docker-compose.override.yml
+# Env
+.env
+.env.*
 
-# ─────────────────────────────────────────────
-# DATABASE DATA (if running Docker volumes locally as bind mounts)
-# ─────────────────────────────────────────────
-postgres-data/
-mongo-data/
+# Coverage
+coverage/
+jacoco/
+surefire-reports/
 
-# ─────────────────────────────────────────────
-# KUBERNETES (avoid committing real secrets manifests)
-# ─────────────────────────────────────────────
-kubernetes/**/secrets.yml
-kubernetes/**/*-secret.yml
+# Java
+*.class
 
-# ─────────────────────────────────────────────
-# TEST / COVERAGE
-# ─────────────────────────────────────────────
-.coverage
-htmlcov/
-.pytest_cache/
-*.cover
+# Archives
+*.jar
+*.war
+*.ear
