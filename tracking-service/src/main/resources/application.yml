@@ -84,6 +84,7 @@ management:
 
 kafka:
   topics:
+    shipment-events: shipment.events
     tracking-updates: tracking.updates
 
 logging:

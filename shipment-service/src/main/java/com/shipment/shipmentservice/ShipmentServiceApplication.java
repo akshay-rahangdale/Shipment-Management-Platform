@@ -6,6 +6,9 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.scheduling.annotation.EnableAsync;
 
+
+import java.util.TimeZone;
+
 /**
  * WHAT IS THIS CLASS?
  *
@@ -78,6 +81,7 @@ public class ShipmentServiceApplication {
          * This fail-fast behaviour is intentional — a half-configured
          * service is worse than no service (Kubernetes will restart it).
          */
+         TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
         SpringApplication.run(ShipmentServiceApplication.class, args);
     }
 }

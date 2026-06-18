@@ -1,5 +1,5 @@
 package com.shipment.trackingservice.service;
-import jakarta.persistence.EntityNotFoundException;
+import java.util.NoSuchElementException;
 import com.shipment.trackingservice.dto.request.CheckpointUpdateRequest;
 import com.shipment.trackingservice.dto.response.TrackingResponse;
 import com.shipment.trackingservice.kafka.producer.TrackingEventProducer;
@@ -26,7 +26,7 @@ public class TrackingService {
     public TrackingResponse getByTrackingNumber(String trackingNumber) {
         TrackingRecord record = trackingRepository
             .findByTrackingNumber(trackingNumber)
-            .orElseThrow(() -> new EntityNotFoundException(
+            .orElseThrow(() -> new NoSuchElementException(
                 "Tracking record not found: " + trackingNumber));
         return toResponse(record);
     }
@@ -37,7 +37,7 @@ public class TrackingService {
 
         TrackingRecord record = trackingRepository
             .findByTrackingNumber(trackingNumber)
-            .orElseThrow(() -> new EntityNotFoundException(
+            .orElseThrow(() -> new NoSuchElementException(
                 "Tracking record not found: " + trackingNumber));
 
         String previousStatus = record.getCurrentStatus();

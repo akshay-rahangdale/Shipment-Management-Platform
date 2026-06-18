@@ -1,0 +1,102 @@
+# ─────────────────────────────────────────────
+# MAVEN / JAVA (applies to all 5 Spring Boot services)
+# ─────────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+
+# Maven wrapper logs
+.mvn/wrapper/maven-wrapper.properties.bak
+
+# ─────────────────────────────────────────────
+# IDE FILES
+# ─────────────────────────────────────────────
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# ─────────────────────────────────────────────
+# PYTHON (ml-detector)
+# ─────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Trained model — generated locally, never commit binary model weights
+ml-detector/model/*.pkl
+ml-detector/**/*.pkl
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ─────────────────────────────────────────────
+# ENVIRONMENT / SECRETS — NEVER COMMIT THESE
+# ─────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+application-local.yml
+application-secrets.yml
+
+# ─────────────────────────────────────────────
+# LOGS
+# ─────────────────────────────────────────────
+*.log
+logs/
+spring.log
+
+# ─────────────────────────────────────────────
+# OS FILES
+# ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─────────────────────────────────────────────
+# DOCKER
+# ─────────────────────────────────────────────
+docker-compose.override.yml
+
+# ─────────────────────────────────────────────
+# DATABASE DATA (if running Docker volumes locally as bind mounts)
+# ─────────────────────────────────────────────
+postgres-data/
+mongo-data/
+
+# ─────────────────────────────────────────────
+# KUBERNETES (avoid committing real secrets manifests)
+# ─────────────────────────────────────────────
+kubernetes/**/secrets.yml
+kubernetes/**/*-secret.yml
+
+# ─────────────────────────────────────────────
+# TEST / COVERAGE
+# ─────────────────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/
+*.cover

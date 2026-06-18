@@ -1,23 +1,4 @@
-# WHAT IS application.yml?
-#
-# This is your service's configuration file. Instead of hardcoding
-# values like port numbers, database URLs, and Kafka addresses in Java
-# code, you put them here. Why? Two reasons:
-#
-# 1. Environment-specific values: localhost works on your laptop,
-#    but in Kubernetes the DB is at postgres-svc.default.svc.cluster.local.
-#    You change the config file (or inject env vars), not the code.
-#
-# 2. Secrets: passwords should NEVER be in Java code (it ends up in Git).
-#    In application.yml you use ${ENV_VAR_NAME} syntax, and Spring
-#    substitutes the actual value from environment variables at runtime.
-#    Kubernetes injects those env vars from Kubernetes Secrets.
-#
-# YAML uses indentation (2 spaces) to show hierarchy.
-# spring.datasource.url is written as:
-#   spring:
-#     datasource:
-#       url: ...
+
 
 # ─────────────────────────────────────────────
 # SERVER
@@ -47,6 +28,13 @@ spring:
     # Prometheus uses it to label metrics: service="shipment-service"
     # Without it, logs from all services look the same.
 
+  task:
+    execution:
+      pool:
+        core-size: 5
+        max-size: 20
+        queue-capacity: 100
+      thread-name-prefix: async-
 
 # ─────────────────────────────────────────────
 # DATABASE (PostgreSQL via JPA)
@@ -58,8 +46,8 @@ spring:
     # On your laptop: localhost (Docker Compose)
     # In Kubernetes: postgres-svc (the Kubernetes Service name)
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:shipment_db}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
+    username: ${POSTGRES_USER:shipment_user}
+    password: ${POSTGRES_PASSWORD:shipment_pass}
     driver-class-name: org.postgresql.Driver
 
     # HikariCP connection pool (Spring Boot's default, and the fastest available)
@@ -76,6 +64,7 @@ spring:
       connection-timeout: 30000   # 30s — how long to wait for a connection from the pool
       idle-timeout: 600000        # 10min — how long an idle connection lives before being closed
       max-lifetime: 1800000       # 30min — maximum lifetime of any connection (prevents stale connections)
+      connection-init-sql: "SET TIME ZONE 'UTC'"
 
   jpa:
     # hibernate.ddl-auto options:
@@ -107,6 +96,7 @@ spring:
           # batch_size: when saving 100 records, Hibernate groups them into
           # batches of 50 and sends 2 SQL calls instead of 100.
           # Critical for bulk operations (importing shipments, etc.)
+          time_zone: UTC 
 
   # ─────────────────────────────────────────────
   # FLYWAY (Database migrations)
@@ -260,15 +250,8 @@ kafka:
     shipment-events: shipment.events
     shipment-updates: shipment.updates
  
-spring:
-  task:
-    execution:
-      pool:
-        core-size: 5
-        max-size: 20
-        queue-capacity: 100
-      thread-name-prefix: async-
 
+  
 
 logging:
   level:
