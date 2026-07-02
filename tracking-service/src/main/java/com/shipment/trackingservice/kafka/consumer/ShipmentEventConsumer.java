@@ -1,5 +1,6 @@
 package com.shipment.trackingservice.kafka.consumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shipment.trackingservice.kafka.event.ShipmentCreatedEvent;
 import com.shipment.trackingservice.model.*;
 import com.shipment.trackingservice.repository.TrackingRepository;
@@ -14,6 +15,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -22,6 +24,7 @@ public class ShipmentEventConsumer {
 
     private final TrackingRepository trackingRepository;
     private final TrackingCacheService cacheService;
+    private final ObjectMapper objectMapper;
 
     @KafkaListener(
         topics       = "${kafka.topics.shipment-events}",
@@ -29,12 +32,13 @@ public class ShipmentEventConsumer {
         concurrency  = "3"
     )
     public void onShipmentEvent(
-            @Payload ShipmentCreatedEvent event,
+            @Payload Map<String, Object> rawEvent,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset,
             Acknowledgment acknowledgment) {
 
+        ShipmentCreatedEvent event = objectMapper.convertValue(rawEvent, ShipmentCreatedEvent.class);
         log.info("Received event={} trackingNumber={} partition={} offset={}",
             event.getEventType(), event.getTrackingNumber(), partition, offset);
 
