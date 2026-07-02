@@ -121,11 +121,14 @@ public class Shipment {
         return !this.status.isTerminal();
     }
 
-    public long getTransitDays() {
-        LocalDateTime start = createdAt;
-        LocalDateTime end = actualDelivery != null ? actualDelivery : LocalDateTime.now();
-        return java.time.Duration.between(start, end).toDays();
+   public long getTransitDays() {
+    if (createdAt == null) {
+        return 0;
     }
+    LocalDateTime start = createdAt;
+    LocalDateTime end = actualDelivery != null ? actualDelivery : LocalDateTime.now();
+    return java.time.Duration.between(start, end).toDays();
+}
 
     public boolean isSlaAtRisk(int warningHours) {
         if (status.isTerminal()) return false;

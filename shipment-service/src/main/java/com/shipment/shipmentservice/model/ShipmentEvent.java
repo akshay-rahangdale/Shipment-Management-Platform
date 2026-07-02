@@ -63,7 +63,7 @@ public class ShipmentEvent {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    void setShipment(Shipment aThis) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+   void setShipment(Shipment shipment) {
+    this.shipment = shipment;
+   }
 }

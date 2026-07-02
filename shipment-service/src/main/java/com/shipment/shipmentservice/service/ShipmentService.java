@@ -71,6 +71,8 @@ public class ShipmentService {
 
         Shipment saved = shipmentRepository.save(shipment);
 
+        eventProducer.publishShipmentCreated(saved);
+
         log.info("Shipment created trackingNumber={}", saved.getTrackingNumber());
 
         return mapper.toResponse(saved);
@@ -81,7 +83,7 @@ public class ShipmentService {
     // ─────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "shipments", key = "#trackingNumber")
+    // @Cacheable(value = "shipments", key = "#trackingNumber")
     public ShipmentResponse getByTrackingNumber(String trackingNumber) {
         log.debug("Fetching shipment trackingNumber={}", trackingNumber);
 
@@ -94,7 +96,7 @@ public class ShipmentService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "shipments", key = "#id")
+    // @Cacheable(value = "shipments", key = "#id")
     public ShipmentResponse getById(UUID id) {
         Shipment shipment = findShipmentOrThrow(id);
         return mapper.toResponse(shipment);
