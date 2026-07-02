@@ -19,8 +19,8 @@ public class SecurityConfig {
                 .pathMatchers("/actuator/health/**").permitAll()
                 .pathMatchers("/actuator/metrics").permitAll()
                 .pathMatchers("/fallback/**").permitAll()
-                .pathMatchers(HttpMethod.GET, "/api/v1/tracking/**").authenticated()
-                .pathMatchers("/api/v1/shipments/**").authenticated()
+                .pathMatchers(HttpMethod.GET, "/api/v1/tracking/**").permitAll()
+                .pathMatchers("/api/v1/shipments/**").permitAll()
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

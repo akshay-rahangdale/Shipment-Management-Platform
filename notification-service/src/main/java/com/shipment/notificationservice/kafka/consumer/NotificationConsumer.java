@@ -3,6 +3,7 @@ package com.shipment.notificationservice.kafka.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shipment.notificationservice.kafka.event.AnomalyAlertEvent;
 import com.shipment.notificationservice.kafka.event.ShipmentCreatedEvent;
+import com.shipment.notificationservice.kafka.event.ShipmentDeliveredEvent;
 import com.shipment.notificationservice.kafka.event.ShipmentUpdatedEvent;
 import com.shipment.notificationservice.service.EmailService;
 import com.shipment.notificationservice.service.IdempotencyService;
@@ -57,8 +58,8 @@ public class NotificationConsumer {
                 handleShipmentCreated(event);
 
             } else if ("SHIPMENT_DELIVERED".equals(eventType)) {
-                ShipmentUpdatedEvent event = objectMapper.convertValue(
-                    rawEvent, ShipmentUpdatedEvent.class);
+                ShipmentDeliveredEvent event = objectMapper.convertValue(
+                    rawEvent, ShipmentDeliveredEvent.class);
                 handleShipmentDelivered(event);
 
             } else {
@@ -170,13 +171,18 @@ public class NotificationConsumer {
         );
     }
 
-    private void handleShipmentDelivered(ShipmentUpdatedEvent event) {
-        emailService.sendStatusUpdate(
-            event.getRecipientEmail(),
-            event.getRecipientName(),
-            event.getTrackingNumber(),
-            event.getPreviousStatus(),
-            "DELIVERED"
+    private void handleShipmentDelivered(ShipmentDeliveredEvent event) {
+        emailService.sendShipmentDelivered(
+                event.getRecipientEmail(),
+                event.getRecipientName(),
+                event.getTrackingNumber(),
+                event.getActualDelivery() != null ? event.getActualDelivery().toString() : null
         );
+
+//        smsService.sendStatusUpdate(
+//                event.getRecipientPhone(),
+//                event.getTrackingNumber(),
+//                "DELIVERED"
+//        );
     }
 }

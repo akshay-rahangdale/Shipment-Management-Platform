@@ -46,6 +46,18 @@ public class EmailService {
     }
 
     @Async
+    public void sendShipmentDelivered(
+            String toEmail,
+            String recipientName,
+            String trackingNumber,
+            String actualDeliveryTime) {
+
+        String subject = "🎉 Your shipment " + trackingNumber + " has been delivered!";
+        String body    = buildDeliveredEmailBody(recipientName, trackingNumber, actualDeliveryTime);
+        send(toEmail, subject, body);
+    }
+
+    @Async
     public void sendDelayAlert(
             String toEmail,
             String recipientName,
@@ -104,6 +116,19 @@ public class EmailService {
             <p><strong>Current Status:</strong> %s</p>
             </body></html>
             """.formatted(name, trackingNumber, previousStatus, currentStatus);
+    }
+
+    private String buildDeliveredEmailBody(
+            String name, String trackingNumber, String actualDeliveryTime) {
+        return """
+            <html><body>
+            <h2>Hi %s,</h2>
+            <p>Great news! Your package has arrived safely at its destination.</p>
+            <p><strong>Tracking Number:</strong> %s</p>
+            <p><strong>Delivered At:</strong> %s</p>
+            <p>Thank you for choosing our delivery service!</p>
+            </body></html>
+            """.formatted(name, trackingNumber, actualDeliveryTime != null ? actualDeliveryTime : "Just now");
     }
 
     private String buildDelayAlertBody(

@@ -1,4 +1,4 @@
-package com.shipment.trackingservice.kafka.event;
+package com.shipment.notificationservice.kafka.event;
 
 import lombok.*;
 
@@ -11,31 +11,25 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @ToString
-public class ShipmentCreatedEvent {
+public class ShipmentDeliveredEvent {
 
     private String eventId;
     private String eventType;
     private LocalDateTime eventTimestamp;
 
-    private UUID shipmentId;
+    private String shipmentId;
     private String trackingNumber;
 
-    private UUID senderId;
-    private String senderName;
-
-    private UUID recipientId;
     private String recipientName;
     private String recipientEmail;
     private String recipientPhone;
 
-    private UUID carrierId;
     private String carrierCode;
-    private String carrierName;
-
-    private String status;
-    private String originAddress;
-    private String destinationAddress;
 
     private LocalDateTime estimatedDelivery;
-    private LocalDateTime createdAt;
+    private LocalDateTime actualDelivery;
+    private long transitDays;
+    private boolean deliveredOnTime;
+
+    private LocalDateTime deliveredAt;
 }

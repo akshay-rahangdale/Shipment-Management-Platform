@@ -86,6 +86,7 @@ kafka:
   topics:
     shipment-events: shipment.events
     tracking-updates: tracking.updates
+    anomaly-alerts: anomaly.alerts
 
 logging:
   level:
