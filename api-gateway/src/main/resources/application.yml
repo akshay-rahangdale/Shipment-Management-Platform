@@ -33,6 +33,23 @@ spring:
                 name: shipmentServiceCB
                 fallbackUri: forward:/fallback/shipment-service
 
+        - id: shipment-service-reference-data
+          uri: ${SHIPMENT_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/customers/**,/api/v1/carriers/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@clientIpKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: shipmentServiceCB
+                fallbackUri: forward:/fallback/shipment-service
+
         - id: tracking-service
           uri: ${TRACKING_SERVICE_URL:http://localhost:8082}
           predicates:

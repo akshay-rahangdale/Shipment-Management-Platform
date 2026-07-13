@@ -26,7 +26,7 @@
         <module>shipment-service</module>
         <module>tracking-service</module>
         <module>notification-service</module>
-        <module>sla-monitor</module>
+        <!-- <module>sla-monitor</module> -->
     </modules>
 
     <properties>

@@ -21,6 +21,7 @@ public class SecurityConfig {
                 .pathMatchers("/fallback/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/v1/tracking/**").permitAll()
                 .pathMatchers("/api/v1/shipments/**").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/v1/customers/**", "/api/v1/carriers/**").permitAll()
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
