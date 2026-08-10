@@ -1,0 +1,136 @@
+{
+  "info": {
+    "_postman_id": "2e5f8f62-8be5-450d-bb33-1c432f4442b8",
+    "name": "Shipment Platform API",
+    "description": "Import this collection into Postman. Default requests use the API Gateway on port 8080. Set accessToken before calling the protected tracking checkpoint endpoint. Notification Service is Kafka/event-driven and does not expose application REST endpoints in this project.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "gatewayUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "shipmentServiceUrl", "value": "http://localhost:8081", "type": "string" },
+    { "key": "trackingServiceUrl", "value": "http://localhost:8082", "type": "string" },
+    { "key": "notificationServiceUrl", "value": "http://localhost:8083", "type": "string" },
+    { "key": "senderId", "value": "", "type": "string" },
+    { "key": "recipientId", "value": "", "type": "string" },
+    { "key": "carrierId", "value": "", "type": "string" },
+    { "key": "shipmentId", "value": "", "type": "string" },
+    { "key": "trackingNumber", "value": "", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "API Gateway",
+      "item": [
+        {
+          "name": "Health",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/actuator/health" }
+        },
+        {
+          "name": "Shipment Service Fallback",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/fallback/shipment-service" }
+        },
+        {
+          "name": "Tracking Service Fallback",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/fallback/tracking-service" }
+        },
+        {
+          "name": "Notification Service Fallback",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/fallback/notification-service" }
+        }
+      ]
+    },
+    {
+      "name": "Shipment Service (via Gateway)",
+      "item": [
+        {
+          "name": "List Customers",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/customers?page=0&size=50&sort=name,asc" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });", "var content = pm.response.json().content || [];", "if (content.length && !pm.collectionVariables.get('senderId')) pm.collectionVariables.set('senderId', content[0].id);", "if (content.length > 1 && !pm.collectionVariables.get('recipientId')) pm.collectionVariables.set('recipientId', content[1].id);"] } }]
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/customers/{{senderId}}" }
+        },
+        {
+          "name": "List Active Carriers",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/carriers" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });", "var carriers = pm.response.json();", "if (carriers.length && !pm.collectionVariables.get('carrierId')) pm.collectionVariables.set('carrierId', carriers[0].id);"] } }]
+        },
+        {
+          "name": "Get Carrier by ID",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/carriers/{{carrierId}}" }
+        },
+        {
+          "name": "Create Shipment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"senderId\": \"{{senderId}}\",\n  \"recipientId\": \"{{recipientId}}\",\n  \"carrierId\": \"{{carrierId}}\",\n  \"serviceTier\": \"EXPRESS\",\n  \"originAddress\": \"Mumbai, Maharashtra, India\",\n  \"destinationAddress\": \"Pune, Maharashtra, India\",\n  \"weightKg\": 1.5,\n  \"declaredValue\": 1500.00,\n  \"estimatedDelivery\": \"2026-12-31T18:00:00\",\n  \"specialInstructions\": \"Handle with care\"\n}" },
+            "url": "{{gatewayUrl}}/api/v1/shipments"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 201', function () { pm.response.to.have.status(201); });", "var shipment = pm.response.json();", "pm.collectionVariables.set('shipmentId', shipment.id);", "pm.collectionVariables.set('trackingNumber', shipment.trackingNumber);"] } }]
+        },
+        {
+          "name": "Get Shipment by ID",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/shipments/{{shipmentId}}" }
+        },
+        {
+          "name": "Get Shipment by Tracking Number",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/shipments/track/{{trackingNumber}}" }
+        },
+        {
+          "name": "List Sender Shipments",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/shipments?senderId={{senderId}}&page=0&size=20&sort=createdAt,desc" }
+        },
+        {
+          "name": "List Shipments by Status",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/shipments/status/PENDING?page=0&size=20&sort=createdAt,desc" }
+        },
+        {
+          "name": "Update Shipment",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"destinationAddress\": \"Pune, Maharashtra, India - Updated Address\",\n  \"specialInstructions\": \"Leave with reception\",\n  \"estimatedDelivery\": \"2027-01-01T18:00:00\",\n  \"updateReason\": \"Customer requested address correction\"\n}" },
+            "url": "{{gatewayUrl}}/api/v1/shipments/{{shipmentId}}"
+          }
+        },
+        {
+          "name": "Mark Shipment Delivered",
+          "request": { "method": "PATCH", "url": "{{gatewayUrl}}/api/v1/shipments/{{shipmentId}}/deliver" }
+        },
+        {
+          "name": "Get At-Risk Shipments",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/shipments/at-risk?warningHours=3" }
+        }
+      ]
+    },
+    {
+      "name": "Tracking Service (via Gateway)",
+      "item": [
+        {
+          "name": "Get Tracking Record",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/api/v1/tracking/{{trackingNumber}}" }
+        },
+        {
+          "name": "Add Tracking Checkpoint (JWT required)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_TRANSIT\",\n  \"timestamp\": \"2026-07-18T12:00:00\",\n  \"scanSource\": \"CARRIER_SCAN\",\n  \"lat\": 19.0760,\n  \"lng\": 72.8777,\n  \"city\": \"Mumbai\",\n  \"countryCode\": \"IN\",\n  \"facilityCode\": \"BOM-HUB-01\",\n  \"description\": \"Shipment departed sorting facility\"\n}" },
+            "url": "{{gatewayUrl}}/api/v1/tracking/{{trackingNumber}}/checkpoints"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Direct Service Health",
+      "description": "Useful for diagnosing a gateway route. These bypass the gateway and run on each service's local port.",
+      "item": [
+        { "name": "Shipment Service Health", "request": { "method": "GET", "url": "{{shipmentServiceUrl}}/actuator/health" } },
+        { "name": "Tracking Service Health", "request": { "method": "GET", "url": "{{trackingServiceUrl}}/actuator/health" } },
+        { "name": "Notification Service Health", "request": { "method": "GET", "url": "{{notificationServiceUrl}}/actuator/health" } }
+      ]
+    }
+  ]
+}

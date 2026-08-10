@@ -60,6 +60,7 @@ public interface ShipmentMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "trackingNumber", ignore = true)
     @Mapping(target = "sender", ignore = true)
+    @Mapping(target = "recipient", ignore = true)
     @Mapping(target = "carrier", ignore = true)
     @Mapping(target = "weightKg", ignore = true)
     @Mapping(target = "declaredValue", ignore = true)

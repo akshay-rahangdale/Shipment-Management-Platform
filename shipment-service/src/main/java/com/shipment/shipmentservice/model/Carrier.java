@@ -47,6 +47,7 @@ public class Carrier {
     private String contactEmail;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     @CreationTimestamp
